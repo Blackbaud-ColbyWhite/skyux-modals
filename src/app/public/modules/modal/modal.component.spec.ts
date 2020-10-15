@@ -29,6 +29,14 @@ import {
 } from '@skyux-sdk/testing';
 
 import {
+  of
+} from 'rxjs';
+
+import {
+  SkyModalHelpProvider
+} from './modal-help.provider';
+
+import {
   SkyModalInstance
 } from './modal-instance';
 
@@ -520,6 +528,25 @@ describe('Modal component', () => {
     (<HTMLElement>document.querySelector('button[name="help-button"]')).click();
 
     expect(modalInstance.openHelp).toHaveBeenCalledWith('default.html');
+
+    getApplicationRef().tick();
+
+    closeModal(modalInstance);
+  }));
+
+  it('should trigger help provider when the help button is clicked if provided', fakeAsync(() => {
+    const helpProviderSpy: jasmine.SpyObj<SkyModalHelpProvider> = jasmine.createSpyObj('SkyModalHelpProvider', ['openTopic']);
+    helpProviderSpy.openTopic.and.returnValue(of());
+    TestBed.overrideProvider(SkyModalHelpProvider, { useValue: helpProviderSpy });
+    const modalInstance = openModal(ModalTestComponent, { helpKey: 'default.html' });
+    spyOn(modalInstance, 'openHelp').and.callThrough();
+
+    expect(document.querySelector('.sky-modal')).toExist();
+
+    (<HTMLElement>document.querySelector('button[name="help-button"]')).click();
+
+    expect(modalInstance.openHelp).not.toHaveBeenCalled();
+    expect(helpProviderSpy.openTopic).toHaveBeenCalledWith('default.html');
 
     getApplicationRef().tick();
 

@@ -3,6 +3,7 @@ import {
   Component,
   ComponentFactoryResolver,
   Injector,
+  Optional,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -13,12 +14,23 @@ import {
 } from '@angular/router';
 
 import {
+  of
+} from 'rxjs';
+
+import {
+  filter,
+  map,
+  mergeMap,
   takeWhile
 } from 'rxjs/operators';
 
 import {
   SkyModalAdapterService
 } from './modal-adapter.service';
+
+import {
+  SkyModalHelpProvider
+} from './modal-help.provider';
 
 import {
   SkyModalInstance
@@ -71,7 +83,8 @@ export class SkyModalHostComponent {
     private adapter: SkyModalAdapterService,
     private injector: Injector,
     private router: Router,
-    private changeDetector: ChangeDetectorRef
+    private changeDetector: ChangeDetectorRef,
+    @Optional() private helpProvider?: SkyModalHelpProvider
   ) { }
 
   public open(
@@ -124,9 +137,20 @@ export class SkyModalHostComponent {
       modalComponentRef.destroy();
     }
 
-    hostService.openHelp.subscribe((helpKey?: string) => {
-      modalInstance.openHelp(helpKey);
-    });
+    // TODO remove modalInstance.openHelp in future breaking change
+    hostService.openHelp.asObservable()
+      .pipe(
+        mergeMap((helpKey: string) => {
+          if (this.helpProvider && helpKey) {
+            return this.helpProvider.openTopic(helpKey)
+              .pipe(map(() => false));
+          } else {
+            return of(helpKey);
+          }
+        }),
+        filter((helpKey: string | false) => helpKey !== false)
+      )
+      .subscribe((helpKey: string) => modalInstance.openHelp(helpKey));
 
     hostService.close.subscribe(() => {
       modalInstance.close();

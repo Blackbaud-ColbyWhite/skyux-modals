@@ -20,6 +20,10 @@ import {
 } from '@skyux/theme';
 
 import {
+  SkyModalHelpProvider
+} from '../modal-help.provider';
+
+import {
   ModalMockMutationObserverService
 } from './mock-modal-mutation-observer';
 
@@ -88,6 +92,10 @@ import {
     {
       provide: MutationObserverService,
       useClass: ModalMockMutationObserverService
+    },
+    {
+      provide: SkyModalHelpProvider,
+      useValue: undefined
     }
   ],
   entryComponents: [
